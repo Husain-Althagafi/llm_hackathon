@@ -1,7 +1,7 @@
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.tools import tool
-from langchain_core.messages import HumanMessage, ToolMessage
+from langchain_core.messages import ToolMessage
 
 
 import getpass
@@ -20,33 +20,43 @@ def multiplication(a: float, b: float) -> float:
     print('using tool: multiplication')
     return a * b   
 
+
+
+@tool
+def EMT_calculator():
+    """Use the effective medium theory calculator"""
+    from ase import Atoms
+    d = 1.10
+    molecule = Atoms('2N', positions=[(0., 0., 0.), (0., 0., d)])
+
+    from ase.build import fcc111
+    slab = fcc111('Cu', size=(4,4,2), vacuum=10.0)
+
+    from ase.visualize import view
+    view(slab)
+
 tools = [multiplication]
 
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
 llm_with_tools = llm.bind_tools(tools)
 
 query = input('Enter a prompt: ')
-messages = [HumanMessage(content=query)]
-
 msg = llm_with_tools.invoke(query)
 
 tool_calls = getattr(msg, "tool_calls", None) or msg.additional_kwargs.get("tool_calls", [])
 
-if not tool_calls:
-    # Model chose not to call a tool; just print the reply
+if not tool_calls: #handles when no tool calls were made
     print(msg.content)
-
 
 else:
     tool_msgs = []
     for tc in tool_calls:
         name = tc["name"]
         args = tc.get("args") or tc.get("arguments") or {}
-        call_id = tc.get("id") or tc.get("tool_call_id")  # Gemini typically sets "id"
+        call_id = tc.get("id") or tc.get("tool_call_id")  
 
         # Execute the right tool
         if name == "multiplication":
-            # With @tool objects, prefer .invoke(args) (dict) or .func(**args)
             result = multiplication.invoke(args)  # same as multiplication.func(**args)
         else:
             result = f"Unknown tool: {name}"
@@ -57,5 +67,6 @@ else:
         )
 
     # 4) Final model turn to compose the answer
-    final = llm_with_tools.invoke(messages + [msg] + tool_msgs)
+    final = llm_with_tools.invoke([msg] + tool_msgs)
+
     print(final.content)
