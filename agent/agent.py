@@ -38,7 +38,7 @@ def chat():
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
     query = input('Enter a prompt: ')
-    print(agent_executor.invoke({'intput': query}) )
+    print(agent_executor.invoke({"input": query})['output'])
     
 
 
