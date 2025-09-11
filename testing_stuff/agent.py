@@ -3,7 +3,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.tools import tool
 from langchain_core.messages import ToolMessage
 
-
 import getpass
 
 #config
@@ -19,8 +18,6 @@ def multiplication(a: float, b: float) -> float:
     """Multiply two numbers."""
     print('using tool: multiplication')
     return a * b   
-
-
 
 @tool
 def EMT_calculator():
