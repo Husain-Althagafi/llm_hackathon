@@ -64,6 +64,17 @@ def descriptor_calculation(smiles: str, descriptor: str) -> str:
 
 
 @tool
+def MolToSmiles(molecule: str) -> str:
+    """Format the molecule into SMILES string."""
+    candidate = molecule.strip()
+    mol = Chem.MolFromSmiles(candidate)
+    
+    if mol is None:
+        raise ValueError(f"Invalid SMILES: {candidate}")
+    return Chem.MolToSmiles(mol, canonical=True)
+
+
+@tool
 def partial_charge_calculation(smiles: str) -> str:
     """Calculate Gasteiger partial charges from a SMILES string."""
     mol = Chem.MolFromSmiles(smiles)
@@ -91,13 +102,13 @@ def generate_png_descriptors(smiles: str) -> str:
 
     return "molecule.png"
 
-@tool
-def display_image(file_path: str) -> str:
-    """Display the image from the file path."""
-    from PIL import Image
-    img = Image.open(file_path)
-    img.show()
-    return "Image displayed"
+#@tool
+#def display_image(file_path: str) -> str:
+#    """Display the image from the file path."""
+#    from PIL import Image
+#    img = Image.open(file_path)
+#    img.show()
+#    return "Image displayed"
 
 
 
