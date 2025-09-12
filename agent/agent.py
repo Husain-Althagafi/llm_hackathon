@@ -10,7 +10,7 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 
 from rdkit import Chem
-from rdkit.Chem import Descriptors
+from rdkit.Chem import Descriptors, AllChem
 
 google_api_key = os.getenv("GEMINI_API_KEY")
 
@@ -18,10 +18,10 @@ if not google_api_key:
     print("GOOGLE_API_KEY environment variable not set. Please set it in the .env file or your environment.")
 
 # TOOLS
-@tool
-def multiplication(a: float, b: float) -> float:
-    """Multiply two numbers."""
-    return a * b  
+# @tool
+# def multiplication(a: float, b: float) -> float:
+#     """Multiply two numbers."""
+#     return a * b  
 
 
 @tool
@@ -35,7 +35,19 @@ def descriptor_calculation(smiles: str, descriptor: str) -> str:
     return desc[descriptor]
 
 
-tools = [multiplication, descriptor_calculation]
+@tool
+def partial_charge_calculation(smiles: str) -> str:
+    """Calculate Gasteiger partial charges from a SMILES string."""
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return "Invalid SMILES string"
+
+    AllChem.ComputeGasteigerCharges(mol)
+    charges = [atom.GetProp('_GasteigerCharge') for atom in mol.GetAtoms()]
+    return str(charges)
+
+
+tools =  [descriptor_calculation]
 
 # Model
 model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=google_api_key)
