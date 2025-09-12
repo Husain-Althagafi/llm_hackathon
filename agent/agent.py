@@ -10,20 +10,21 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 
 from rdkit import Chem
-from rdkit.Chem import Descriptors, AllChem
+from rdkit.Chem import Descriptors, AllChem, Draw
+from rdkit.Chem.Draw import SimilarityMaps
+
+from io import BytesIO
+import matplotlib
+import math
+import matplotlib.pyplot as plt
+
 
 google_api_key = os.getenv("GEMINI_API_KEY")
 
 if not google_api_key:
     print("GOOGLE_API_KEY environment variable not set. Please set it in the .env file or your environment.")
 
-# TOOLS
-# @tool
-# def multiplication(a: float, b: float) -> float:
-#     """Multiply two numbers."""
-#     return a * b  
-
-
+# TOOLS 
 @tool
 def descriptor_calculation(smiles: str, descriptor: str) -> str:
     """Calculate molecular descriptors from a SMILES string."""
@@ -47,7 +48,41 @@ def partial_charge_calculation(smiles: str) -> str:
     return str(charges)
 
 
-tools =  [descriptor_calculation, partial_charge_calculation]
+@tool
+def generate_png_descriptors(smiles: str) -> str:
+    """Generate a 2D depiction of the molecule with descriptors annotated."""
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return "Invalid SMILES string"
+    
+    AllChem.Mol.ComputeGasteigerCharges(mol)
+    contribs = [mol.GetAtomWithIdx(i).GetDoubleProp('_GasteigerCharge') for i in range(mol.GetNumAtoms())]
+    d2d = Draw.MolDraw2DCairo(400, 400)
+    sim = SimilarityMaps.GetSimilarityMapFromWeights(mol, contribs, d2d, colorMap='jet', contourLines=10)
+    sim.FinishDrawing()
+    sim.WriteDrawingText('molecule.png')
+
+    return "molecule.png"
+
+# @tool
+# def save_image(image) -> str:
+#     """Save the image to a file and return the file path."""
+#     file_path = "molecule.png"
+#     with open(file_path, "wb") as f:
+#         f.write(image)
+#     return file_path
+
+@tool
+def display_image(file_path: str) -> str:
+    """Display the image from the file path."""
+    from PIL import Image
+    img = Image.open(file_path)
+    img.show()
+    return "Image displayed"
+
+
+
+tools =  [descriptor_calculation, partial_charge_calculation, generate_png_descriptors, display_image]
 
 # Model
 model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=google_api_key)
