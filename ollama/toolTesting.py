@@ -4,7 +4,7 @@ LangChain Ollama Agent with RDKit Molecular Structure Analysis Tool
 Usage: python langchain_agent.py
 """
 
-from langchain_community.llms import Ollama
+from langchain_ollama import OllamaLLM
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain.tools import tool
 from langchain.prompts import PromptTemplate
@@ -84,7 +84,7 @@ def create_chemistry_agent():
     """Create a chemistry agent with molecular analysis capabilities"""
     
     # Initialize Ollama LLM
-    llm = Ollama(
+    llm = OllamaLLM(
         model="llama3.2",  # Change this to your preferred model
         temperature=0.1,
         base_url="http://localhost:11434"

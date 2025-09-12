@@ -3,8 +3,7 @@
 LangChain Ollama Agent with RDKit Molecular Structure Analysis Tool
 Usage: python langchain_agent.py
 """
-
-from langchain_community.llms import Ollama
+from langchain_ollama import OllamaLLM
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain.tools import tool
 from langchain.prompts import PromptTemplate
@@ -13,85 +12,61 @@ from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 
 # Define the RDKit tool using LangChain's @tool decorator
+from langchain.tools import tool
+from rdkit import Chem
+
 @tool
-def molecular_structure_analysis(smiles: str) -> str:
-    """Analyze molecular structure by looping over atoms and bonds from a SMILES string.
+def substructure_search(molecule_smiles: str, pattern: str, use_chirality: bool = False) -> str:
+    """Search for substructures in a molecule using SMILES or SMARTS patterns.
     
     Args:
-        smiles: A SMILES string representing a molecule (e.g., 'C1OC1', 'c1ccccc1', 'CCO')
+        molecule_smiles: SMILES string of the target molecule to search in
+        pattern: SMILES or SMARTS pattern to search for (e.g., 'ccO', 'CO', 'c[NH1]')
+        use_chirality: Whether to consider stereochemistry in matching (default: False)
     
     Returns:
-        Detailed information about atoms, bonds, and their relationships including
-        atomic numbers, symbols, bond types, connectivity, neighbor relationships,
-        atom indices and valences.
+        Information about substructure matches including whether pattern is found,
+        atom indices of matches, and total number of matches found.
     """
     try:
-        mol = Chem.MolFromSmiles(smiles)
+        mol = Chem.MolFromSmiles(molecule_smiles)
         if mol is None:
-            return "Invalid SMILES string. Please provide a valid SMILES representation."
+            return f"Invalid molecule SMILES: {molecule_smiles}"
         
-        result = []
-        result.append(f"Molecular formula: {rdMolDescriptors.CalcMolFormula(mol)}")
-        result.append(f"Number of atoms: {mol.GetNumAtoms()}")
-        result.append(f"Number of bonds: {mol.GetNumBonds()}")
-        result.append("")
+        # Try SMARTS first, then SMILES
+        patt = Chem.MolFromSmarts(pattern) or Chem.MolFromSmiles(pattern)
+        if patt is None:
+            return f"Invalid pattern: {pattern}"
         
-        # Loop over atoms
-        result.append("ATOMS:")
-        for i, atom in enumerate(mol.GetAtoms()):
-            symbol = atom.GetSymbol()
-            atomic_num = atom.GetAtomicNum()
-            valence = atom.GetExplicitValence()
-            neighbors = [n.GetSymbol() for n in atom.GetNeighbors()]
-            neighbor_indices = [n.GetIdx() for n in atom.GetNeighbors()]
-            
-            result.append(f"Atom {i}: {symbol} (atomic_num={atomic_num}, valence={valence})")
-            result.append(f"  Neighbors: {neighbors} at indices {neighbor_indices}")
+        # Check for matches
+        has_match = mol.HasSubstructMatch(patt, useChirality=use_chirality)
         
-        result.append("")
+        if not has_match:
+            return f"Pattern '{pattern}' not found in {molecule_smiles}"
         
-        # Loop over bonds
-        result.append("BONDS:")
-        for i, bond in enumerate(mol.GetBonds()):
-            begin_idx = bond.GetBeginAtomIdx()
-            end_idx = bond.GetEndAtomIdx()
-            bond_type = bond.GetBondType()
-            begin_symbol = mol.GetAtomWithIdx(begin_idx).GetSymbol()
-            end_symbol = mol.GetAtomWithIdx(end_idx).GetSymbol()
-            
-            result.append(f"Bond {i}: {begin_symbol}({begin_idx})-{end_symbol}({end_idx}) [{bond_type}]")
+        # Get all matches
+        matches = mol.GetSubstructMatches(patt, useChirality=use_chirality)
         
-        result.append("")
-        
-        # Additional connectivity information
-        result.append("CONNECTIVITY MATRIX:")
-        for i in range(mol.GetNumAtoms()):
-            connections = []
-            for j in range(mol.GetNumAtoms()):
-                bond = mol.GetBondBetweenAtoms(i, j)
-                if bond:
-                    connections.append(f"{j}({bond.GetBondType()})")
-            if connections:
-                symbol = mol.GetAtomWithIdx(i).GetSymbol()
-                result.append(f"Atom {i}({symbol}) connected to: {', '.join(connections)}")
+        result = [f"Pattern '{pattern}' found {len(matches)} time(s) in {molecule_smiles}"]
+        result.append(f"Match indices: {matches}")
         
         return "\n".join(result)
         
     except Exception as e:
-        return f"Error analyzing molecule: {str(e)}"
+        return f"Error: {str(e)}"
 
 def create_chemistry_agent():
     """Create a chemistry agent with molecular analysis capabilities"""
     
     # Initialize Ollama LLM
-    llm = Ollama(
+    llm = OllamaLLM(
         model="llama3.2",  # Change this to your preferred model
         temperature=0.1,
         base_url="http://localhost:11434"
     )
     
     # Create tools list
-    tools = [molecular_structure_analysis]
+    tools = [substructure_search]
     
     # Create a custom prompt template for the ReAct agent
     template = """You are a helpful chemistry assistant with access to molecular analysis tools.
