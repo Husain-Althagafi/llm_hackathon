@@ -42,12 +42,12 @@ def partial_charge_calculation(smiles: str) -> str:
     if mol is None:
         return "Invalid SMILES string"
 
-    AllChem.ComputeGasteigerCharges(mol)
+    AllChem.Mol.ComputeGasteigerCharges(mol)
     charges = [atom.GetProp('_GasteigerCharge') for atom in mol.GetAtoms()]
     return str(charges)
 
 
-tools =  [descriptor_calculation]
+tools =  [descriptor_calculation, partial_charge_calculation]
 
 # Model
 model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=google_api_key)
