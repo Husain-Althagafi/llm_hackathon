@@ -76,18 +76,6 @@ def chat():
     #     print(f'messages: {messages}')
     #     print(f'final: {final.content}')
 
-
-
-    
-    
-
-
-
-
-
-
-
-
     # messages = []
 
     # query = input('Enter a prompt: ')
