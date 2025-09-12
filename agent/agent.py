@@ -4,6 +4,7 @@ LangChain Ollama Agent with RDKit Molecular Structure Analysis Tool
 Usage: python langchain_agent.py
 """
 
+<<<<<<< HEAD
 from langchain_community.llms import Ollama
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain.tools import tool
@@ -16,6 +17,48 @@ from rdkit.Chem import rdMolDescriptors
 @tool
 def molecular_structure_analysis(smiles: str) -> str:
     """Analyze molecular structure by looping over atoms and bonds from a SMILES string.
+=======
+from tools import ALL_TOOLS
+
+
+google_api_key = os.getenv("GEMINI_API_KEY")
+
+if not google_api_key:
+    print("GOOGLE_API_KEY environment variable not set. Please set it in the .env file or your environment.")
+
+# Tools
+tools = ALL_TOOLS
+
+# Model
+model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=google_api_key)
+
+def get_session_history(session_id: str) -> BaseChatMessageHistory:
+    return FileChatMessageHistory(file_path=f"agent/memory/{session_id}.json")
+
+def chat():
+    prompt = ChatPromptTemplate.from_messages([
+        ('system', 'You are a helpful assistant'),
+        ('placeholder', "{history}"),
+        ('human', "{input}"),
+        ('placeholder', "{agent_scratchpad}")
+    ])
+
+    agent = create_tool_calling_agent(model, tools, prompt=prompt)
+    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+
+    agent_executor_with_memory = RunnableWithMessageHistory(
+        agent_executor,
+        get_session_history,
+        input_messages_key='input',
+        history_messages_key='history'
+    )
+
+    query = input('Enter a prompt: ')
+    print(agent_executor_with_memory.invoke(
+        {"input": query},
+        config={'configurable': {'session_id': 'abc123'}}
+    )['output'])
+>>>>>>> c84ba4c08d6f18eddcccf3d93758943fea282832
     
     Args:
         smiles: A SMILES string representing a molecule (e.g., 'C1OC1', 'c1ccccc1', 'CCO')
