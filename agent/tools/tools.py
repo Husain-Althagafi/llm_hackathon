@@ -58,6 +58,17 @@ def descriptor_calculation(smiles: str, descriptor: str) -> str:
 
 
 @tool
+def MolToSmiles(molecule: str) -> str:
+    """Format the molecule into SMILES string."""
+    candidate = molecule.strip()
+    mol = Chem.MolFromSmiles(candidate)
+    
+    if mol is None:
+        raise ValueError(f"Invalid SMILES: {candidate}")
+    return Chem.MolToSmiles(mol, canonical=True)
+
+
+@tool
 def partial_charge_calculation(smiles: str) -> str:
     """Calculate Gasteiger partial charges from a SMILES string."""
     mol = Chem.MolFromSmiles(smiles)
@@ -85,7 +96,110 @@ def generate_png_descriptors(smiles: str) -> str:
 
     return "molecule.png"
 
+#@tool
+#def display_image(file_path: str) -> str:
+#    """Display the image from the file path."""
+#    from PIL import Image
+#    img = Image.open(file_path)
+#    img.show()
+#    return "Image displayed"
+
+
 @tool
+def chemical_transformation_remove(smiles: str, smarts: str):
+    """Remove SMARTS from SMILES
+    
+    Args:
+        smiles: molecule string to remove molecule from.
+        smarts: The molecule pattern to remove. 
+
+    Returns:
+        The modified molecules in SMILES format.
+    """
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return f"Invalid molecule SMILES: {smiles}"
+        
+        # Try SMARTS first, then SMILES
+        patt = Chem.MolFromSmarts(smarts) or Chem.MolFromSmiles(smarts)
+        if patt is None:
+            return f"Invalid pattern: {smarts}"
+        
+        rm = Chem.DeleteSubstructs(m,patt)
+        return "Modified Molecule: "+ Chem.MolToSmiles(rm)
+    except Exception as e:
+        return f"Error: {e}"
+    
+
+@tool
+def chemical_transformation_replace(smiles: str, smarts: str, replace: str):
+    """Remove SMARTS from SMILES
+    
+    Args:
+        smiles: molecule string to remove molecule from.
+        smarts: The molecule pattern to remove.
+        replace: The molecule pattern to replace with. 
+
+    Returns:
+        The modified molecules in SMILES format.
+    """
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return f"Invalid molecule SMILES: {smiles}"
+        
+        replace = Chem.MolFromSmiles(replace)
+        if mol is None:
+            return f"Invalid molecule SMILES: {replace}"
+        
+        # Try SMARTS first, then SMILES
+        patt = Chem.MolFromSmarts(smarts) or Chem.MolFromSmiles(smarts)
+        if patt is None:
+            return f"Invalid pattern: {smarts}"
+        
+        mod_m = Chem.ReplaceSubstructs(mol,patt,replace)
+        return "Modified Molecule: "+ Chem.MolToSmiles(mod_m)
+    except Exception as e:
+        return f"Error: {e}"
+
+
+@tool
+def molecule_side_chain_removal(smiles: str, smiles_sc: str):
+    """
+    Replaces sidechains with the provided side chain
+    """
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return f"Invalid molecule SMILES: {smiles}"
+        
+        sc = Chem.MolFromSmiles(smiles_sc)
+        if sc is None:
+            return f"Invalid molecule SMILES: {smiles_sc}"
+
+        
+        mod_m = Chem.ReplaceSidechains(smiles, smiles_sc)
+        return "Modified Molecule: "+ Chem.MolToSmiles(mod_m)
+    except Exception as e:
+        return f"Error: {e}"
+
+@tool
+def molecule_core_removal(smiles: str, core: str):
+    
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return f"Invalid molecule SMILES: {smiles}"
+    
+        core_ = Chem.MolFromSmiles(core)
+        if core_ is None:
+            return f"Invalid molecule SMILES: {core}"
+        
+        mod_m = ReplaceCore(mol, core_)
+        return "Modified Molecule: " + Chem.MolToSmiles(mod_m)
+    except Exception as e:
+        return f"Error: {e}"
 def display_image(file_path: str) -> str:
     """Display the image from the file path."""
     from PIL import Image
