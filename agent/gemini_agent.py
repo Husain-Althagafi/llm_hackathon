@@ -11,7 +11,6 @@ from langchain_core.chat_history import BaseChatMessageHistory
 
 from tools import ALL_TOOLS
 
-
 google_api_key = os.getenv("GEMINI_API_KEY")
 
 if not google_api_key:
@@ -53,4 +52,4 @@ def chat():
 
 
 if __name__ == "__main__":
-    main()
+    chat()
