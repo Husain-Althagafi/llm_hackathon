@@ -3,3 +3,4 @@
 __pycache__/
 envconfig/
 agent/memory/*
+*.[Pp][Nn][Gg]
