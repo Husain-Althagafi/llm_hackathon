@@ -126,7 +126,7 @@ def chemical_transformation_remove(smiles: str, smarts: str):
         if patt is None:
             return f"Invalid pattern: {smarts}"
         
-        rm = Chem.DeleteSubstructs(m,patt)
+        rm = Chem.DeleteSubstructs(mol,patt)
         return "Modified Molecule: "+ Chem.MolToSmiles(rm)
     except Exception as e:
         return f"Error: {e}"
