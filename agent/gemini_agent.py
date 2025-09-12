@@ -21,12 +21,12 @@ if not google_api_key:
 tools = ALL_TOOLS
 
 # Model
-# model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=google_api_key)
-model = OllamaLLM(
-        model="llama3.1",  # Change this to your preferred model
-        temperature=0.1,
-        base_url="http://localhost:11434"
-    )
+model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=google_api_key)
+# model = OllamaLLM(
+#         model="llama3.1",  # Change this to your preferred model
+#         temperature=0.1,
+#         base_url="http://localhost:11434"
+#     )
 
 def get_session_history(session_id: str) -> BaseChatMessageHistory:
     return FileChatMessageHistory(file_path=f"agent/memory/{session_id}.json")
@@ -55,6 +55,7 @@ def chat():
         config={'configurable': {'session_id': 'abc123'}}
     )['output'])
     
+
 
 if __name__ == "__main__":
     chat()

@@ -15,7 +15,7 @@ def create_chemistry_agent():
     
     # Initialize Ollama LLM
     llm = OllamaLLM(
-        model="llama3.1",  # Change this to your preferred model
+        model="llama3.1:8b",  # Change this to your preferred model
         temperature=0.1,
         base_url="http://localhost:11434"
     )
