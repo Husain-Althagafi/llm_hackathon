@@ -65,7 +65,7 @@ def descriptor_calculation(smiles: str, descriptor: str) -> str:
 
 @tool
 def MolToSmiles(molecule: str) -> str:
-    """Format the molecule into SMILES string."""
+    """Convert the molecule into SMILES format"""
     candidate = molecule.strip()
     mol = Chem.MolFromSmiles(candidate)
     
