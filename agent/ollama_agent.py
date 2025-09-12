@@ -4,24 +4,40 @@ LangChain Ollama Agent with RDKit Molecular Structure Analysis Tool
 Usage: python langchain_agent.py
 """
 
+from langchain_ollama import OllamaLLM, ChatOllama
+from langchain.agents import create_react_agent, AgentExecutor, create_tool_calling_agent
+from langchain.prompts import PromptTemplate, ChatPromptTemplate
+import os
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.tools import tool
+from langchain.agents import AgentExecutor
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import HumanMessage, ToolMessage, SystemMessage
+from langchain.agents import create_tool_calling_agent, AgentExecutor
+from langchain_community.chat_message_histories import ChatMessageHistory, FileChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_ollama import OllamaLLM
-from langchain.agents import create_react_agent, AgentExecutor
-from langchain.prompts import PromptTemplate
 
 from tools import ALL_TOOLS
+
+def get_session_history(session_id: str) -> BaseChatMessageHistory:
+    return FileChatMessageHistory(file_path=f"agent/memory/{session_id}.json")
 
 def create_chemistry_agent():
     """Create a chemistry agent with molecular analysis capabilities"""
     
     # Initialize Ollama LLM
-    llm = OllamaLLM(
+    llm = ChatOllama(
         model="llama3.1:8b",  # Change this to your preferred model
-        temperature=0.1,
+        temperature=0,
         base_url="http://localhost:11434"
     )
     
     # Create tools list
     tools = ALL_TOOLS
+
+    # llm = llm.bind_tools(tools)
     
     # Create a custom prompt template for the ReAct agent
     template = """You are a helpful chemistry assistant with access to molecular analysis tools.
@@ -31,7 +47,12 @@ TOOLS:
 You have access to the following tools:
 
 {tools}
-
+When you use a tool, you MUST format exactly:
+Action Input: <VALID JSON object matching the tool schema>
+Do NOT use key=value. Do NOT add backticks or extra text.
+Example:
+Action: descriptor_calculation
+Action Input: {{\"smiles\": \"c1ccccc1\", \"descriptor\": \"TPSA\"}}
 To use a tool, please use the following format:
 
 ```
@@ -60,6 +81,12 @@ New input: {input}
     
     # Create the ReAct agent
     agent = create_react_agent(llm, tools, prompt)
+    # agent = create_tool_calling_agent(llm, tools, prompt=ChatPromptTemplate.from_messages([
+    #     ('system', 'You are a helpful assistant with access to molecular analysis tools.'),
+    #     ('placeholder', "{chat_history}"),
+    #     ('human', "{input}"),
+    #     ('placeholder', "{agent_scratchpad}")
+    # ]))
     
     # Create agent executor
     agent_executor = AgentExecutor(
@@ -69,7 +96,7 @@ New input: {input}
         handle_parsing_errors=True,
         max_iterations=3
     )
-    
+
     return agent_executor
 
 def main():
@@ -95,6 +122,7 @@ def main():
         print("- 'Analyze CC(=O)O' (acetic acid)")
         print("- 'quit' to exit")
         print()
+
         
         chat_history = ""
         

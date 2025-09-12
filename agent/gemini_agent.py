@@ -8,7 +8,6 @@ from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain_community.chat_message_histories import ChatMessageHistory, FileChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
-from langchain_ollama import OllamaLLM
 
 from tools import ALL_TOOLS
 
@@ -22,11 +21,6 @@ tools = ALL_TOOLS
 
 # Model
 model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=google_api_key)
-# model = OllamaLLM(
-#         model="llama3.1",  # Change this to your preferred model
-#         temperature=0.1,
-#         base_url="http://localhost:11434"
-#     )
 
 def get_session_history(session_id: str) -> BaseChatMessageHistory:
     return FileChatMessageHistory(file_path=f"agent/memory/{session_id}.json")
