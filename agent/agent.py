@@ -5,6 +5,9 @@ from langchain.agents import AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, ToolMessage, SystemMessage
 from langchain.agents import create_tool_calling_agent, AgentExecutor
+from langchain_community.chat_message_histories import ChatMessageHistory, FileChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory
 
 google_api_key = os.getenv("GEMINI_API_KEY")
 
@@ -25,20 +28,56 @@ tools = [multiplication]
 model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=google_api_key)
 # model = model.bind_tools(tools)
 
+# MEMORY_FILE = 'memory.txt'
+
+# def load_memory():
+#     if os.path.exists(MEMORY_FILE):
+#         with open(MEMORY_FILE, 'r', encoding='utf-8') as f:
+#             return f.read()
+#     return ""
+
+# def save_memory(history):
+#     with open(MEMORY_FILE, 'w', encoding='utf-8') as f:
+#         f.write(history)
+
+
+def get_session_history(session_id: str) -> BaseChatMessageHistory:
+    return FileChatMessageHistory(file_path=f"agent/memory/{session_id}.json")
 
 def chat():
 
+    # memory = load_memory().split("<>")[4:]
+    # print(memory)
+
     prompt = ChatPromptTemplate.from_messages([
         ('system', 'You are a helpful assistant'),
+        ('placeholder', "{history}"),
         ('human', "{input}"),
         ('placeholder', "{agent_scratchpad}")
     ])
 
+    # prompt = ChatPromptTemplate.from_messages([
+    #     ('system', 'You are a helpful assistant'),
+    #     ('human', "{input}"),
+    #     ('placeholder', "{agent_scratchpad}")
+    # ])
+
+
     agent = create_tool_calling_agent(model, tools, prompt=prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
+    agent_executor_with_memory = RunnableWithMessageHistory(
+        agent_executor,
+        get_session_history,
+        input_messages_key='input',
+        history_messages_key='history'
+    )
+
     query = input('Enter a prompt: ')
-    print(agent_executor.invoke({'intput': query}) )
+    print(agent_executor_with_memory.invoke(
+        {"input": query},
+        config={'configurable': {'session_id': 'abc123'}}
+    )['output'])
     
 
 
