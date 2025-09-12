@@ -111,4 +111,98 @@ def generate_png_descriptors(smiles: str) -> str:
 #    return "Image displayed"
 
 
+@tool
+def chemical_transformation_remove(smiles: str, smarts: str):
+    """Remove SMARTS from SMILES
+    
+    Args:
+        smiles: molecule string to remove molecule from.
+        smarts: The molecule pattern to remove. 
 
+    Returns:
+        The modified molecules in SMILES format.
+    """
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return f"Invalid molecule SMILES: {smiles}"
+        
+        # Try SMARTS first, then SMILES
+        patt = Chem.MolFromSmarts(smarts) or Chem.MolFromSmiles(smarts)
+        if patt is None:
+            return f"Invalid pattern: {smarts}"
+        
+        rm = Chem.DeleteSubstructs(m,patt)
+        return "Modified Molecule: "+ Chem.MolToSmiles(rm)
+    except Exception as e:
+        return f"Error: {e}"
+    
+
+@tool
+def chemical_transformation_replace(smiles: str, smarts: str, replace: str):
+    """Remove SMARTS from SMILES
+    
+    Args:
+        smiles: molecule string to remove molecule from.
+        smarts: The molecule pattern to remove.
+        replace: The molecule pattern to replace with. 
+
+    Returns:
+        The modified molecules in SMILES format.
+    """
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return f"Invalid molecule SMILES: {smiles}"
+        
+        replace = Chem.MolFromSmiles(replace)
+        if mol is None:
+            return f"Invalid molecule SMILES: {replace}"
+        
+        # Try SMARTS first, then SMILES
+        patt = Chem.MolFromSmarts(smarts) or Chem.MolFromSmiles(smarts)
+        if patt is None:
+            return f"Invalid pattern: {smarts}"
+        
+        mod_m = Chem.ReplaceSubstructs(mol,patt,replace)
+        return "Modified Molecule: "+ Chem.MolToSmiles(mod_m)
+    except Exception as e:
+        return f"Error: {e}"
+
+
+@tool
+def molecule_side_chain_removal(smiles: str, smiles_sc: str):
+    """
+    Replaces sidechains with the provided side chain
+    """
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return f"Invalid molecule SMILES: {smiles}"
+        
+        sc = Chem.MolFromSmiles(smiles_sc)
+        if sc is None:
+            return f"Invalid molecule SMILES: {smiles_sc}"
+
+        
+        mod_m = Chem.ReplaceSidechains(smiles, smiles_sc)
+        return "Modified Molecule: "+ Chem.MolToSmiles(mod_m)
+    except Exception as e:
+        return f"Error: {e}"
+
+@tool
+def molecule_core_removal(smiles: str, core: str):
+    
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return f"Invalid molecule SMILES: {smiles}"
+    
+        core_ = Chem.MolFromSmiles(core)
+        if core_ is None:
+            return f"Invalid molecule SMILES: {core}"
+        
+        mod_m = ReplaceCore(mol, core_)
+        return "Modified Molecule: " + Chem.MolToSmiles(mod_m)
+    except Exception as e:
+        return f"Error: {e}"
