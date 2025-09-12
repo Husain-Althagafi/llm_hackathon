@@ -9,20 +9,33 @@ from langchain_community.chat_message_histories import ChatMessageHistory, FileC
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 
+from rdkit import Chem
+from rdkit.Chem import Descriptors
+
 google_api_key = os.getenv("GEMINI_API_KEY")
 
 if not google_api_key:
     print("GOOGLE_API_KEY environment variable not set. Please set it in the .env file or your environment.")
 
-
 # TOOLS
 @tool
 def multiplication(a: float, b: float) -> float:
     """Multiply two numbers."""
-    print('using tool: multiplication')
     return a * b  
 
-tools = [multiplication]
+
+@tool
+def descriptor_calculation(smiles: str, descriptor: str) -> str:
+    """Calculate molecular descriptors from a SMILES string."""
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return "Invalid SMILES string"
+
+    desc = {desc_name: func(mol) for desc_name, func in Descriptors.descList}
+    return desc[descriptor]
+
+
+tools = [multiplication, descriptor_calculation]
 
 # Model
 model = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=google_api_key)
