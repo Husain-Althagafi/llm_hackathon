@@ -1,8 +1,7 @@
 globalChemEnginePlugin = true;
 
-try
-fileName = "_.py";
-outputFormat = "o.io";
+fileName = fullfile(pwd, "_.py"); 
+outputFormat = fullfile(pwd, "o.io");  
 
 % pyrun("print('test'") % built-in matlab python interface
 
@@ -15,11 +14,14 @@ f = fopen(sprintf("%s", outputFormat), 'r');
 x = fread(f, '*char');
 f = fclose(f);
 
+if(exist("molecule.png","file"))
+    imshow(imread("molecule.png"))
+
 system(sprintf("del %s",outputFormat));
 
 switch(true)
     case ~isempty(x)
-        disp(x)
+        disp("1" + x)
         continue;
 
     otherwise
@@ -33,7 +35,4 @@ switch(true)
         continue;
 end
 end
-
-catch fileError
-    fprintf(2,"%s\n", fileError.message);
 end
